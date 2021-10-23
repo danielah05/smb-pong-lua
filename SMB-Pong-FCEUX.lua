@@ -101,7 +101,7 @@ while true do
 	
 	if gamestarted > 0 then
 	    if settings_pong_only == 1 then
-			memory.writebyte(0x000E, 0x08)
+			memory.writebyte(0x000E, 0x0B)
 		end
 	
 		local p1col = "#ff0000"

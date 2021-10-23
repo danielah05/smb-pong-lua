@@ -103,7 +103,7 @@ function main()
  
   if gamestarted > 0 then
     if settings_pong_only == 1 then
-      emu.write(0x000E, 0x08, emu.memType.cpu)
+      emu.write(0x000E, 0x0B, emu.memType.cpu)
     end
     
     p1col = 0xff0000
