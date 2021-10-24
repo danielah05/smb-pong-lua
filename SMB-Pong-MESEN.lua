@@ -30,9 +30,7 @@ settings_pong_only = 0
 settings_hard_mode = 0
 ----------------------------------------
 
-function main()
-  state = emu.getState()
-  
+function main()  
   gamestarted = emu.read(0x0770, emu.memType.cpu)
   is2player = emu.read(0x77A, emu.memType.cpu)
   
