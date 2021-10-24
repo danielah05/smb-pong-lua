@@ -24,6 +24,9 @@ p1_vs_score = 0
 p2_vs_score = 0
 mirror_timer = 0
 mirror_flip = 0
+ball_x_flip = 0
+p1_x_flip = 0
+p2_x_flip = 0
 -- bunch of settings stuff do not touch (just like how you shouldnt touch anything in general)
 settings_menu_open = 0 -- should be 0
 settings_selected = 11 -- should be toggled to 11 on menu open
@@ -37,6 +40,8 @@ function mirrorcontrols()
   if gamestarted == 0 then
     mirror_timer = 0
     mirror_flip = 0
+    p1_x = 16
+    p2_x = 16*14
   end
   if gamestarted == 1 then
     if settings_mirror_chaos == 1 then
@@ -44,6 +49,13 @@ function mirrorcontrols()
         mirror_flip = mirror_flip == 1 and 0 or 1
         mirror_timer = 240
         emu.write(0x00FF, 0x04, emu.memType.cpu)
+        ball_x_flip = ball_x - 128
+        ball_x = ball_x - ball_x_flip - ball_x_flip - 8
+        ball_dx = -ball_dx
+        p1_x_flip = p1_x - 128
+        p1_x = p1_x - p1_x_flip - p1_x_flip - 16
+        p2_x_flip = p2_x - 128
+        p2_x = p2_x - p2_x_flip - p2_x_flip - 16
       end
       mirror_timer = mirror_timer - 1
         if mirror_flip == 1 then
@@ -144,7 +156,7 @@ function main()
       emu.drawString(2, 32, "Mirror Chaos: " .. settings_mirror_chaos, 0xffffff, 0xFF000000, 1)
       if settings_selected == 11 then emu.drawString(115, 2, "Disables anything SMB to\nallow a normal and fun game\nof Pong! (Includes 2 Player)", 0xffffff, 0xFF000000, 1) end
       if settings_selected == 21 then emu.drawString(115, 2, "Tired of having fun?\nTry Hard Mode instead!\nDon't let the Ball get Mario,\nor something bad happends!", 0xffffff, 0xFF000000, 1) end
-      if settings_selected == 31 then emu.drawString(115, 2, "Every few seconds, the game\nwill Mirror! (Not Finished)", 0xffffff, 0xFF000000, 1) end
+      if settings_selected == 31 then emu.drawString(115, 2, "Every few seconds, not just\nthe game, but also your\ncontrols will mirror!", 0xffffff, 0xFF000000, 1) end
     end
   end
  
@@ -192,10 +204,20 @@ function main()
       ball_dy = -ball_dy
     end
     
-    if (p1_x < ball_x + ball_width and p1_x + p1_width > ball_x and p1_y < ball_y + ball_height and p1_y + p1_height > ball_y) then
-      emu.write(0x00FF, 0x02, emu.memType.cpu)
-      ball_x = p1_x+16
-      ball_dx = -ball_dx
+    if mirror_flip == 0 then
+      if (p1_x < ball_x + ball_width and p1_x + p1_width > ball_x and p1_y < ball_y + ball_height and p1_y + p1_height > ball_y) then
+        emu.write(0x00FF, 0x02, emu.memType.cpu)
+        ball_x = p1_x+16
+        ball_dx = -ball_dx
+      end
+    end
+    
+    if mirror_flip == 1 then
+      if (p1_x < ball_x + ball_width and p1_x + p1_width > ball_x and p1_y < ball_y + ball_height and p1_y + p1_height > ball_y) then
+        emu.write(0x00FF, 0x02, emu.memType.cpu)
+        ball_x = p1_x-10
+        ball_dx = -ball_dx
+      end
     end
     
     if settings_hard_mode == 1 then
@@ -205,28 +227,50 @@ function main()
     end
     
     if is2player == 0 then
-      if ball_x < 0 then
-        if ball_x < 126 then
-          p2_score = math.min(999, p2_score + 1)
+      if mirror_flip == 0 then
+        if ball_x < 0 then
+          if ball_x < 126 then
+            p2_score = math.min(999, p2_score + 1)
+          end
+          p1_score = 0
+          ball_x = 248/2
+          ball_y = 231/2
+          p1_y = 90
+          ball_dx = math.random(2) == 1 and 2 or -2
+          ball_dy = math.random(2) == 1 and 2 or -2
+          if settings_pong_only == 0 then emu.reset() end
         end
-        p1_score = 0
-        ball_x = 248/2
-        ball_y = 231/2
-        p1_x = 16
-        p1_y = 90
-        ball_dx = math.random(2) == 1 and 2 or -2
-        ball_dy = math.random(2) == 1 and 2 or -2
-        if settings_pong_only == 0 then emu.reset() end
+
+        if ball_x > 248 then
+          p1_score = math.min(999, p1_score + 1)
+          emu.write(0x00FF, 0x02, emu.memType.cpu)
+          ball_dx = -ball_dx
+        end
+    end
+    if mirror_flip == 1 then
+       if ball_x > 248 then
+         if ball_x > 126 then
+           p2_score = math.min(999, p2_score + 1)
+         end
+         p1_score = 0
+         ball_x = 248/2
+         ball_y = 231/2
+         p1_y = 90
+         ball_dx = math.random(2) == 1 and 2 or -2
+         ball_dy = math.random(2) == 1 and 2 or -2
+         if settings_pong_only == 0 then emu.reset() end
       end
-      
-      if ball_x > 248 then
+
+      if ball_x < 0 then
         p1_score = math.min(999, p1_score + 1)
         emu.write(0x00FF, 0x02, emu.memType.cpu)
         ball_dx = -ball_dx
       end
     end
+  end
     
     if is2player == 1 then
+      if mirror_flip == 0 then
       if (p2_x < ball_x + ball_width and p2_x + p2_width > ball_x and p2_y < ball_y + ball_height and p2_y + p2_height > ball_y) then
         emu.write(0x00FF, 0x02, emu.memType.cpu)
         ball_x = p2_x-10
@@ -242,13 +286,35 @@ function main()
         end
         ball_x = 248/2
         ball_y = 231/2
-        p1_x = 16
         p1_y = 90
-        p2_x = 16*14
         p2_y = 90
         ball_dx = math.random(2) == 1 and 2 or -2
         ball_dy = math.random(2) == 1 and 2 or -2
         if settings_pong_only == 0 then emu.reset() end
+      end
+      end
+      if mirror_flip == 1 then
+      if (p2_x < ball_x + ball_width and p2_x + p2_width > ball_x and p2_y < ball_y + ball_height and p2_y + p2_height > ball_y) then
+        emu.write(0x00FF, 0x02, emu.memType.cpu)
+        ball_x = p2_x+16
+        ball_dx = -ball_dx
+      end
+
+      if (ball_x < 0 or ball_x > 248) then
+        if ball_x > 128 then
+          p2_vs_score = math.min(999, p2_vs_score + 1)
+        end
+        if ball_x < 126 then
+          p1_vs_score = math.min(999, p1_vs_score + 1)
+        end
+        ball_x = 248/2
+        ball_y = 231/2
+        p1_y = 90
+        p2_y = 90
+        ball_dx = math.random(2) == 1 and 2 or -2
+        ball_dy = math.random(2) == 1 and 2 or -2
+        if settings_pong_only == 0 then emu.reset() end
+      end
       end
     end
     
@@ -260,12 +326,16 @@ function main()
     emu.drawRectangle(9, 224, 40, 9, 0x2264b0ff, true, 1)
     emu.drawRectangle(10*21-1, 224, 40, 9, 0x2264b0ff, true, 1)
     if is2player == 0 then
-      emu.drawString(10, 225, "P1: " .. p1_score, p1col, 0xFF000000, 1)
-      emu.drawString(10*21, 225, "P2: " .. p2_score, p2col, 0xFF000000, 1)
+      if mirror_flip == 0 then emu.drawString(10, 225, "P1: " .. p1_score, p1col, 0xFF000000, 1) end
+      if mirror_flip == 0 then emu.drawString(10*21, 225, "P2: " .. p2_score, p2col, 0xFF000000, 1) end
+      if mirror_flip == 1 then emu.drawString(10, 225, "P2: " .. p2_score, p2col, 0xFF000000, 1) end
+      if mirror_flip == 1 then emu.drawString(10*21, 225, "P1: " .. p1_score, p1col, 0xFF000000, 1) end
     end
     if is2player == 1 then
-      emu.drawString(10, 225, "P1: " .. p1_vs_score, p1col, 0xFF000000, 1)
-      emu.drawString(10*21, 225, "P2: " .. p2_vs_score, p2col, 0xFF000000, 1)
+      if mirror_flip == 0 then emu.drawString(10, 225, "P1: " .. p1_vs_score, p1col, 0xFF000000, 1) end
+      if mirror_flip == 0 then emu.drawString(10*21, 225, "P2: " .. p2_vs_score, p2col, 0xFF000000, 1) end
+      if mirror_flip == 1 then emu.drawString(10, 225, "P2: " .. p2_vs_score, p2col, 0xFF000000, 1) end
+      if mirror_flip == 1 then emu.drawString(10*21, 225, "P1: " .. p1_vs_score, p1col, 0xFF000000, 1) end
     end
     emu.drawRectangle(mario_x, mario_y, mario_width, mario_height, 0xFF000000, true, 1)
   end
