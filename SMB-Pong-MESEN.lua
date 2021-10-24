@@ -22,21 +22,67 @@ p1_score = 0
 p2_score = 0
 p1_vs_score = 0
 p2_vs_score = 0
+mirror_timer = 0
+mirror_flip = 0
 -- bunch of settings stuff do not touch (just like how you shouldnt touch anything in general)
 settings_menu_open = 0 -- should be 0
 settings_selected = 11 -- should be toggled to 11 on menu open
 settings_menu_delay = 0
 settings_pong_only = 0
 settings_hard_mode = 0
+settings_mirror_chaos = 0
 ----------------------------------------
+bufferO = {}
+function mirrorcontrols()
+  if gamestarted == 0 then
+    mirror_timer = 0
+    mirror_flip = 0
+  end
+  if gamestarted == 1 then
+    if settings_mirror_chaos == 1 then
+      if mirror_timer < 1 then
+        mirror_flip = mirror_flip == 1 and 0 or 1
+        mirror_timer = 240
+        emu.write(0x00FF, 0x04, emu.memType.cpu)
+      end
+      mirror_timer = mirror_timer - 1
+        if mirror_flip == 1 then
+        inputmirror = emu.getInput(0)
+        inputmirror.left, inputmirror.right = inputmirror.right, inputmirror.left
+        emu.setInput(0, inputmirror)
+        bufferI = emu.getScreenBuffer()
+        for y = 0, 239 do
+          for x = 0, 255 do
+             bufferO[y*256 + x] = bufferI[y*256 + 255 - x]
+          end
+        end
+        emu.setScreenBuffer(bufferO)
+      end
+      if mirror_flip == 0 then
+        inputmirror = emu.getInput(0)
+        inputmirror.left, inputmirror.right = inputmirror.left, inputmirror.right
+        emu.setInput(0, inputmirror)
+        bufferI = emu.getScreenBuffer()
+        emu.setScreenBuffer(bufferI)
+        end
+      end
+      if settings_mirror_chaos == 0 then
+        inputmirror = emu.getInput(0)
+        inputmirror.left, inputmirror.right = inputmirror.left, inputmirror.right
+        emu.setInput(0, inputmirror)
+        bufferI = emu.getScreenBuffer()
+        emu.setScreenBuffer(bufferI)
+        end
+    end
+end
 
-function main()  
+function main()
   gamestarted = emu.read(0x0770, emu.memType.cpu)
   is2player = emu.read(0x77A, emu.memType.cpu)
   
   input = emu.getInput(0)
   input2 = emu.getInput(1)
-  
+
   mario_powerstate = emu.read(0x0754, emu.memType.cpu)
   mario_x = emu.read(0x03AD, emu.memType.cpu)
   if mario_powerstate == 0 then mario_y = emu.read(0x03B8, emu.memType.cpu) end
@@ -68,7 +114,7 @@ function main()
       if settings_menu_delay == 0 then
         if input.down then
           settings_menu_delay = 10
-          settings_selected = math.min(21, settings_selected + 10)
+          settings_selected = math.min(31, settings_selected + 10)
         end
     
         if input.up then
@@ -80,22 +126,25 @@ function main()
           settings_menu_delay = 20
             if settings_selected == 11 then settings_pong_only = settings_pong_only == 1 and 0 or 1 end
             if settings_selected == 21 then settings_hard_mode = settings_hard_mode == 1 and 0 or 1 end
+            if settings_selected == 31 then settings_mirror_chaos = settings_mirror_chaos == 1 and 0 or 1 end
         end
       end
       
       settings_menu_delay = math.max(0, settings_menu_delay - 1)
       emu.drawRectangle(0, 0, 114, 11, 0x33000000, true, 1)
       emu.drawRectangle(1, 1, 112, 9, 0x2264b0ff, true, 1)
-      emu.drawRectangle(0, 11, 114, 30-2, 0x33000000, true, 1)
-      emu.drawRectangle(1, 11, 112, 27, 0x2264b0ff, true, 1)
+      emu.drawRectangle(0, 11, 114, 31, 0x33000000, true, 1)
+      emu.drawRectangle(1, 11, 112, 30, 0x2264b0ff, true, 1)
       emu.drawRectangle(114, 0, 142, 39, 0x33000000, true, 1)
       emu.drawRectangle(114, 1, 141, 37, 0x2264b0ff, true, 1)
       emu.drawRectangle(1, settings_selected, 112, 10, 0x1100b0ff, true, 1)
       emu.drawString(2, 2, "Settings - Close with B", 0xffffff, 0xFF000000, 1)
       emu.drawString(2, 12, "Pong Only: " .. settings_pong_only, 0xffffff, 0xFF000000, 1)
       emu.drawString(2, 22, "Hard Mode: " .. settings_hard_mode, 0xffffff, 0xFF000000, 1)
+      emu.drawString(2, 32, "Mirror Chaos: " .. settings_mirror_chaos, 0xffffff, 0xFF000000, 1)
       if settings_selected == 11 then emu.drawString(115, 2, "Disables anything SMB to\nallow a normal and fun game\nof Pong! (Includes 2 Player)", 0xffffff, 0xFF000000, 1) end
       if settings_selected == 21 then emu.drawString(115, 2, "Tired of having fun?\nTry Hard Mode instead!\nDon't let the Ball get Mario,\nor something bad happends!", 0xffffff, 0xFF000000, 1) end
+      if settings_selected == 31 then emu.drawString(115, 2, "Every few seconds, the game\nwill Mirror! (Not Finished)", 0xffffff, 0xFF000000, 1) end
     end
   end
  
@@ -223,3 +272,4 @@ function main()
 end
 
 emu.addEventCallback(main, emu.eventType.endFrame)
+emu.addEventCallback(mirrorcontrols, emu.eventType.inputPolled)
