@@ -15,7 +15,7 @@ https://datacrystal.romhacking.net/wiki/Super_Mario_Bros.:RAM_map
 
 # running the script
 MESEN:
-- download the script from here by right clicking and saving https://raw.githubusercontent.com/danielh05/smb-pong-lua/main/SMB-Pong-MESEN.lua  
+- download the script from here by right clicking and saving https://raw.githubusercontent.com/danielah05/smb-pong-lua/main/SMB-Pong-MESEN.lua  
 - download the mesen emulator if you dont have it already download to mesen: https://www.mesen.ca/ (make sure to download the nes one, not the snes one)  
 - load a rom of super mario bros into the emulator (rom dump used as a base for this script is "Super Mario Bros. (JU) (PRG0) [!]", also known as "Super Mario Bros. (World)")  
 - in the emulator, go to "Debug -> Script Window" or press CTRL+N on your keyboard  
@@ -23,7 +23,7 @@ MESEN:
 - this should open up the windows file explorer, from here just load the lua file and everything should be running fine
 
 FCEUX:
-- download the script from here by right clicking and saving https://raw.githubusercontent.com/danielh05/smb-pong-lua/main/SMB-Pong-FCEUX.lua  
+- download the script from here by right clicking and saving https://raw.githubusercontent.com/danielah05/smb-pong-lua/main/SMB-Pong-FCEUX.lua  
 - download the fceux emulator if you dont have it already download to fceux: https://fceux.com/web/download.html  
 - load a rom of super mario bros into the emulator (rom dump used as a base for this script is "Super Mario Bros. (JU) (PRG0) [!]", also known as "Super Mario Bros. (World)")  
 - in the emulator, go to "File -> Lua -> New Lua Script Window"  
